@@ -25,6 +25,17 @@ app.get("/books", async (req, res) => {
   }
 });
 
+app.post("/sign-up", async (req, res) => {
+  const user = await prisma.user.create({
+    data: {
+      name: req.body.name,
+      email: req.body.email,
+      password: hash(req.body.password),
+    },
+  });
+  res.send(user);
+});
+
 app.listen(port, () => {
   console.log(`App running: http://localhost:${port}`);
 });
