@@ -14,3 +14,7 @@ model user {
   id Int @id @default(autoincrement())
   name String
 }
+model book {
+  id Int @id @default(autoincrement())
+  title String
+}
