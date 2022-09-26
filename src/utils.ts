@@ -2,7 +2,7 @@
 import bcrypt from "bcryptjs";
 
 export function hash(password: string) {
-  return bcrypt.hashSync(password, 5);
+  return bcrypt.hashSync(password, 6);
 }
 
 export function verify(password: string, hash: string) {

@@ -15,10 +15,10 @@ model User {
   name String
   email String @unique
   password String
-  balance Int
-  avatar String
+  balance Int @default(500)
+  avatar String?
   books Book[]
-  cart Cart?
+
 }
 model Book {
   id Int @id @default(autoincrement())
@@ -29,12 +29,5 @@ model Book {
   image String
   userId Int
   owner User @relation(fields: [userId], references: [id])
-  cartId Int?
-  cart Cart? @relation(fields: [cartId], references: [id])
+
 }
-model Cart {
-  id Int @id @default(autoincrement())
-  userId Int @unique
-  user User @relation(fields: [userId], references: [id])
-  books Book[]
-  }

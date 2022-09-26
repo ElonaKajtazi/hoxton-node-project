@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import { PrismaClient } from "@prisma/client";
+import { hash } from "./utils";
 
 const app = express();
 app.use(cors());
