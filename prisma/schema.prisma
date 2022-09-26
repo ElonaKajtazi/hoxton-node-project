@@ -18,7 +18,7 @@ model User {
   balance Int
   avatar String
   books Book[]
-  cart Cart[]
+  cart Cart?
 }
 model Book {
   id Int @id @default(autoincrement())
@@ -34,7 +34,7 @@ model Book {
 }
 model Cart {
   id Int @id @default(autoincrement())
-  userId Int
+  userId Int @unique
   user User @relation(fields: [userId], references: [id])
   books Book[]
   }
