@@ -9,7 +9,7 @@ app.use(express.json());
 
 const prisma = new PrismaClient();
 
-const port = 3456;
+const port = 5678;
 
 app.get("/", (req, res) => {
   res.send("Starting project");
@@ -26,16 +26,44 @@ app.get("/books", async (req, res) => {
 });
 
 app.post("/sign-up", async (req, res) => {
+  const { name, email, password } = req.body;
   try {
-    const user = await prisma.user.create({
-      data: {
-        name: req.body.name,
-        email: req.body.email,
-        password: hash(req.body.password),
-      },
-    });
-    const token = generateToken(user.id)
-    res.send({user, token});
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (!existingUser) {
+      const user = await prisma.user.create({
+        data: {
+          name,
+          email,
+          password: hash(password),
+        },
+      });
+      const token = generateToken(user.id);
+      res.send({ user, token });
+    } else {
+      res.status(400).send({ errors: ["Email already exists"] });
+    }
+  } catch (error) {
+    //@ts-ignore
+    res.status(400).send({ errors: [error.message] });
+  }
+});
+
+app.post("/sign-in", async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (!existingUser) {
+      const user = await prisma.user.create({
+        data: {
+          email,
+          password: hash(password),
+        },
+      });
+      const token = generateToken(user.id);
+      res.send({ user, token });
+    } else {
+      res.status(400).send({ errors: ["Email already exists"] });
+    }
   } catch (error) {
     //@ts-ignore
     res.status(400).send({ errors: [error.message] });
