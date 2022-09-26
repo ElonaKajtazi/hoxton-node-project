@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import { PrismaClient } from "@prisma/client";
-import { hash } from "./utils";
+import { generateToken, hash } from "./utils";
 
 const app = express();
 app.use(cors());
@@ -26,14 +26,20 @@ app.get("/books", async (req, res) => {
 });
 
 app.post("/sign-up", async (req, res) => {
-  const user = await prisma.user.create({
-    data: {
-      name: req.body.name,
-      email: req.body.email,
-      password: hash(req.body.password),
-    },
-  });
-  res.send(user);
+  try {
+    const user = await prisma.user.create({
+      data: {
+        name: req.body.name,
+        email: req.body.email,
+        password: hash(req.body.password),
+      },
+    });
+    const token = generateToken(user.id)
+    res.send({user, token});
+  } catch (error) {
+    //@ts-ignore
+    res.status(400).send({ errors: [error.message] });
+  }
 });
 
 app.listen(port, () => {
