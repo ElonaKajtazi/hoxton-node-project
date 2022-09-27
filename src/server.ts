@@ -17,7 +17,7 @@ app.get("/", (req, res) => {
 
 app.get("/books", async (req, res) => {
   try {
-    const books = await prisma.book.findMany({include:{categories: true}});
+    const books = await prisma.book.findMany({ include: { categories: true } });
     res.send(books);
   } catch (error) {
     //@ts-ignore
@@ -26,14 +26,26 @@ app.get("/books", async (req, res) => {
 });
 app.get("/categories", async (req, res) => {
   try {
-    const categories = await prisma.category.findMany({include:{books: true}});
+    const categories = await prisma.category.findMany({
+      include: { books: true },
+    });
     res.send(categories);
   } catch (error) {
     //@ts-ignore
     res.status(400).send({ errors: [error.message] });
   }
 });
-
+app.get("/authors", async (req, res) => {
+  try {
+    const authors = await prisma.author.findMany({
+      include: { Book: true },
+    });
+    res.send(authors);
+  } catch (error) {
+    //@ts-ignore
+    res.status(400).send({ errors: [error.message] });
+  }
+});
 // app.get("/users", async (req, res) => {
 //   try {
 //     const users = await prisma.user.findMany({ include: { cart: true } });
