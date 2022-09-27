@@ -44,13 +44,24 @@ app.get("/authors", async (req, res) => {
     res.status(400).send({ errors: [error.message] });
   }
 });
-// app.post("/users", async (req, res) => {
-//   const user = await prisma.user.findUnique({where: {email}})
-// });
+app.get("/users", async (req, res) => {
+  const users = await prisma.user.findMany({ include: { cart: true } });
+  res.send(users);
+});
+app.get("/carts", async (req, res) => {
+  const carts = await prisma.cart.findMany({ include: { books: true } });
+  res.send(carts);
+});
 
 // app.post("/bookInCart", async (req, res) => {
 // const book = await prisma.book.findUnique({where:{id}})
 // });
+app.post("/buy", async (req, res) => {
+  // 1. Get the user from the token
+  //2. Calculate the total from the cart
+  //3. If the user has enough balance buy every book
+  //4. Create a boughtBook and delete the cartItem for each book in the cart
+});
 
 app.post("/sign-up", async (req, res) => {
   const { name, email, password } = req.body;

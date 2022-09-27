@@ -11,33 +11,45 @@ datasource db {
 }
 
 model User {
-  id       Int     @id @default(autoincrement())
-  name     String?
-  email    String  @unique
-  password String
-  balance  Int     @default(500)
-  avatar   String?
-  cart     Cart?
+  id         Int          @id @default(autoincrement())
+  name       String?
+  email      String       @unique
+  password   String
+  balance    Int          @default(500)
+  avatar     String?
+  cart       CartItem[]
+  boughtBooks BoughtBook[]
 }
 
 model Book {
-  id          Int        @id @default(autoincrement())
+  id          Int          @id @default(autoincrement())
   title       String
   price       Int
   description String
   image       String
-  cartId      Int?
-  cart        Cart?      @relation(fields: [cartId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  inStock Int
   categories  Category[]
   authorId    Int
-  author      Author     @relation(fields: [authorId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  author      Author       @relation(fields: [authorId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  cart        CartItem[]
+  boughtBooks  BoughtBook[]
 }
 
-model Cart {
-  id     Int    @id @default(autoincrement())
-  userId Int    @unique
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  books  Book[]
+model CartItem {
+  id     Int  @id @default(autoincrement())
+  user   User @relation(fields: [userId], references: [id])
+  book   Book @relation(fields: [bookId], references: [id])
+  userId Int
+  bookId Int
+  quantity Int @default(1)
+}
+
+model BoughtBook {
+  id     Int  @id @default(autoincrement())
+  user   User @relation(fields: [userId], references: [id])
+  book   Book @relation(fields: [bookId], references: [id])
+  userId Int
+  bookId Int
 }
 
 model Author {
