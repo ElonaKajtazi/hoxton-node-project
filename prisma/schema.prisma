@@ -23,7 +23,6 @@ model User {
 model Book {
   id          Int        @id @default(autoincrement())
   title       String
-  author      String
   price       Int
   description String
   image       String
@@ -51,10 +50,4 @@ model Category {
   id    Int    @id @default(autoincrement())
   name  String
   books Book[]
-}
-
-model Category {
-  id Int @id @default(autoincrement())
-  name String
-  books Book []
 }
