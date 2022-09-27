@@ -46,16 +46,8 @@ app.get("/authors", async (req, res) => {
     res.status(400).send({ errors: [error.message] });
   }
 });
-// app.get("/users", async (req, res) => {
-//   try {
-//     const users = await prisma.cart.findMany({
-//       include: { user: true, books: true },
-//     });
-//     res.send(users);
-//   } catch (error) {
-//     //@ts-ignore
-//     res.status(400).send({ errors: [error.message] });
-//   }
+// app.post("/users", async (req, res) => {
+//   const user = await prisma.user.findUnique({where: {email}})
 // });
 
 // app.post("/bookInCart", async (req, res) => {
