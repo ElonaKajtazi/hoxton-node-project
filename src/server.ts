@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import { PrismaClient } from "@prisma/client";
-import { generateToken, hash } from "./utils";
+import { generateToken, hash, verify } from "./utils";
 
 const app = express();
 app.use(cors());
@@ -28,20 +28,37 @@ app.get("/books", async (req, res) => {
 app.post("/sign-up", async (req, res) => {
   const { name, email, password } = req.body;
   try {
-    const existingUser = await prisma.user.findUnique({ where: { email } });
-    if (!existingUser) {
-      const user = await prisma.user.create({
-        data: {
-          name,
-          email,
-          password: hash(password),
-        },
-      });
-      const token = generateToken(user.id);
-      res.send({ user, token });
-    } else {
-      res.status(400).send({ errors: ["Email already exists"] });
+    const errors: string[] = [];
+
+    if (typeof name !== "string") {
+      errors.push("Name missing or not a string");
     }
+    if (typeof email !== "string") {
+      errors.push("Email missing or not a string");
+    }
+
+    if (typeof password !== "string") {
+      errors.push("Password missing or not a string");
+    }
+
+    if (errors.length > 0) {
+      res.status(400).send({ errors });
+      return;
+    }
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) {
+      res.status(400).send({ errors: ["Email already exists."] });
+      return;
+    }
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hash(password),
+      },
+    });
+    const token = generateToken(user.id);
+    res.send({ user, token });
   } catch (error) {
     //@ts-ignore
     res.status(400).send({ errors: [error.message] });
@@ -49,23 +66,34 @@ app.post("/sign-up", async (req, res) => {
 });
 
 app.post("/sign-in", async (req, res) => {
-  const { email, password } = req.body;
   try {
-    const existingUser = await prisma.user.findUnique({ where: { email } });
-    if (!existingUser) {
-      const user = await prisma.user.create({
-        data: {
-          email,
-          password: hash(password),
-        },
-      });
+    const { email, password } = req.body;
+    const errors: string[] = [];
+
+    if (typeof email !== "string") {
+      errors.push("Email missing or not a string");
+    }
+
+    if (typeof password !== "string") {
+      errors.push("Password missing or not a string");
+    }
+
+    if (errors.length > 0) {
+      res.status(400).send({ errors });
+      return;
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+    if (user && verify(password, user.password)) {
       const token = generateToken(user.id);
       res.send({ user, token });
     } else {
-      res.status(400).send({ errors: ["Email already exists"] });
+      res.status(400).send({ errors: ["Username/password invalid."] });
     }
   } catch (error) {
-    //@ts-ignore
+    // @ts-ignore
     res.status(400).send({ errors: [error.message] });
   }
 });
