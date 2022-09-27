@@ -17,8 +17,7 @@ model User {
   password String
   balance Int @default(500)
   avatar String?
-  books Book[]
-
+  cart Cart?
 }
 model Book {
   id Int @id @default(autoincrement())
@@ -27,7 +26,13 @@ model Book {
   price Int
   description String
   image String
-  userId Int
-  owner User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  cartId Int?
+  cart Cart? @relation(fields: [cartId], references: [id],  onDelete: Cascade, onUpdate: Cascade)
 
+}
+model Cart {
+  id Int @id @default(autoincrement())
+  userId Int @unique
+  user User @relation(fields: [userId], references: [id],  onDelete: Cascade, onUpdate: Cascade)
+  books Book []
 }

@@ -17,7 +17,9 @@ app.get("/", (req, res) => {
 
 app.get("/books", async (req, res) => {
   try {
-    const books = await prisma.book.findMany({ include: { owner: true } });
+    const books = await prisma.book.findMany(
+      
+    );
     res.send(books);
   } catch (error) {
     //@ts-ignore
