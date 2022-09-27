@@ -34,11 +34,32 @@ app.get("/books/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
 
-    const book = await prisma.book.findUnique({ where: { id } });
+    const book = await prisma.book.findUnique({
+      where: { id },
+      include: { author: true, categories: true },
+    });
     if (book) {
       res.send(book);
     } else {
       res.status(400).send({ errors: ["Book not found"] });
+    }
+  } catch (error) {
+    //@ts-ignore
+    res.status(400).send({ errors: [error.message] });
+  }
+});
+app.get("/authors/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+
+    const author = await prisma.author.findUnique({
+      where: { id },
+      include: { book: true },
+    });
+    if (author) {
+      res.send(author);
+    } else {
+      res.status(400).send({ errors: ["Author not found"] });
     }
   } catch (error) {
     //@ts-ignore
