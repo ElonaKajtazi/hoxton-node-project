@@ -24,6 +24,25 @@ app.get("/books", async (req, res) => {
     res.status(400).send({ errors: [error.message] });
   }
 });
+app.get("/categories", async (req, res) => {
+  try {
+    const categories = await prisma.category.findMany({include:{books: true}});
+    res.send(categories);
+  } catch (error) {
+    //@ts-ignore
+    res.status(400).send({ errors: [error.message] });
+  }
+});
+
+// app.get("/users", async (req, res) => {
+//   try {
+//     const users = await prisma.user.findMany({ include: { cart: true } });
+//     res.send(users);
+//   } catch (error) {
+//     //@ts-ignore
+//     res.status(400).send({ errors: [error.message] });
+//   }
+// });
 
 // app.get("/users", async (req, res) => {
 //   try {
