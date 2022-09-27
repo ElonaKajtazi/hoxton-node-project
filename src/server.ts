@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import { PrismaClient } from "@prisma/client";
-import { generateToken, hash, verify } from "./utils";
+import { generateToken, getCurrentUser, hash, verify } from "./utils";
 
 const app = express();
 app.use(cors());
@@ -9,7 +9,7 @@ app.use(express.json());
 
 const prisma = new PrismaClient();
 
-const port = 5678;
+const port = 4000;
 
 app.get("/", (req, res) => {
   res.send("Starting project");
@@ -37,9 +37,7 @@ app.get("/categories", async (req, res) => {
 });
 app.get("/authors", async (req, res) => {
   try {
-    const authors = await prisma.author.findMany({
-      include: { Book: true },
-    });
+    const authors = await prisma.author.findMany({ include: { book: true } });
     res.send(authors);
   } catch (error) {
     //@ts-ignore
@@ -51,12 +49,7 @@ app.get("/authors", async (req, res) => {
 // });
 
 // app.post("/bookInCart", async (req, res) => {
-//   const cart = await prisma.cart.create({
-//     data: {
-//       userId: req.body.userId,
-//     },
-//   });
-//   res.send(cart);
+// const book = await prisma.book.findUnique({where:{id}})
 // });
 
 app.post("/sign-up", async (req, res) => {
@@ -128,6 +121,25 @@ app.post("/sign-in", async (req, res) => {
     }
   } catch (error) {
     // @ts-ignore
+    res.status(400).send({ errors: [error.message] });
+  }
+});
+app.get("/validate", async (req, res) => {
+  try {
+    const token = req.headers.authorization;
+    if (token) {
+      const user = await getCurrentUser(token);
+      if (user) {
+        const newToken = generateToken(user.id);
+        res.send({ user, token: newToken });
+      } else {
+        res.status(400).send({ errors: ["Token invalid"] });
+      }
+    } else {
+      res.status(400).send({ errors: ["Token not provided"] });
+    }
+  } catch (error) {
+    //@ts-ignore
     res.status(400).send({ errors: [error.message] });
   }
 });
