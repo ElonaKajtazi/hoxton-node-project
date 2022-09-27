@@ -19,28 +19,17 @@ model User {
   avatar   String?
   cart     Cart?
 }
-<<<<<<< HEAD
-=======
-model Book {
-  id Int @id @default(autoincrement())
-  title String
-  author String
-  price Int
-  description String
-  image String
-  cartId Int?
-  cart Cart? @relation(fields: [cartId], references: [id],  onDelete: Cascade, onUpdate: Cascade)
-  categories Category[]
->>>>>>> fe1093fb3f5b3b6e8373d61a19ef4086f27478af
 
 model Book {
-  id          Int      @id @default(autoincrement())
+  id          Int        @id @default(autoincrement())
   title       String
+  author      String
   price       Int
   description String
   image       String
   cartId      Int?
-  cart        Cart?    @relation(fields: [cartId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  cart        Cart?      @relation(fields: [cartId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  categories  Category[]
   author      Author[]
 }
 
@@ -59,7 +48,7 @@ model Author {
 }
 
 model Category {
-  id Int @id @default(autoincrement())
-  name String
-  books Book []
+  id    Int    @id @default(autoincrement())
+  name  String
+  books Book[]
 }
