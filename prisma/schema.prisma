@@ -51,7 +51,3 @@ model Category {
   name  String
   books Book[]
 }
-<<<<<<< HEAD
-
-=======
->>>>>>> 135bd6bad1e85b725ca422c07c6a2a4b7e27cafa
