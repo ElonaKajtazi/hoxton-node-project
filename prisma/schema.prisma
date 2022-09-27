@@ -29,7 +29,8 @@ model Book {
   cartId      Int?
   cart        Cart?      @relation(fields: [cartId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   categories  Category[]
-  author      Author[]
+  authorId    Int
+  author      Author     @relation(fields: [authorId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
 model Cart {
@@ -42,7 +43,7 @@ model Cart {
 model Author {
   id       Int    @id @default(autoincrement())
   fullName String
-  Book     Book?  @relation(fields: [bookId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  book     Book[]
   bookId   Int?
 }
 
