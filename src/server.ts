@@ -17,15 +17,23 @@ app.get("/", (req, res) => {
 
 app.get("/books", async (req, res) => {
   try {
-    const books = await prisma.book.findMany(
-      
-    );
+    const books = await prisma.book.findMany({include:{categories: true}});
     res.send(books);
   } catch (error) {
     //@ts-ignore
     res.status(400).send({ errors: [error.message] });
   }
 });
+
+// app.get("/users", async (req, res) => {
+//   try {
+//     const users = await prisma.user.findMany({ include: { cart: true } });
+//     res.send(users);
+//   } catch (error) {
+//     //@ts-ignore
+//     res.status(400).send({ errors: [error.message] });
+//   }
+// });
 
 app.post("/sign-up", async (req, res) => {
   const { name, email, password } = req.body;
@@ -103,4 +111,3 @@ app.post("/sign-in", async (req, res) => {
 app.listen(port, () => {
   console.log(`App running: http://localhost:${port}`);
 });
-

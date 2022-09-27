@@ -28,11 +28,18 @@ model Book {
   image String
   cartId Int?
   cart Cart? @relation(fields: [cartId], references: [id],  onDelete: Cascade, onUpdate: Cascade)
+  categories Category[]
 
 }
 model Cart {
   id Int @id @default(autoincrement())
   userId Int @unique
   user User @relation(fields: [userId], references: [id],  onDelete: Cascade, onUpdate: Cascade)
+  books Book []
+}
+
+model Category {
+  id Int @id @default(autoincrement())
+  name String
   books Book []
 }
