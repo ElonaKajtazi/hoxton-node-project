@@ -9,7 +9,7 @@ app.use(express.json());
 
 const prisma = new PrismaClient();
 
-const port = 4000;
+const port = 4444;
 
 app.get("/", (req, res) => {
   res.send("Starting project");
@@ -17,7 +17,9 @@ app.get("/", (req, res) => {
 
 app.get("/books", async (req, res) => {
   try {
-    const books = await prisma.book.findMany({ include: { categories: true } });
+    const books = await prisma.book.findMany({
+      include: { categories: true, cart: true, boughtBooks: true },
+    });
     res.send(books);
   } catch (error) {
     //@ts-ignore
@@ -45,23 +47,122 @@ app.get("/authors", async (req, res) => {
   }
 });
 app.get("/users", async (req, res) => {
-  const users = await prisma.user.findMany({ include: { cart: true } });
+  const users = await prisma.user.findMany({
+    include: { cart: true, boughtBooks: true },
+  });
   res.send(users);
 });
-app.get("/carts", async (req, res) => {
-  const carts = await prisma.cart.findMany({ include: { books: true } });
-  res.send(carts);
-});
-
-// app.post("/bookInCart", async (req, res) => {
-// const book = await prisma.book.findUnique({where:{id}})
+// app.get("/carts", async (req, res) => {
+//   const carts = await prisma.cart.findMany({ include: { books: true } });
+//   res.send(carts);
 // });
-app.post("/buy", async (req, res) => {
-  // 1. Get the user from the token
-  //2. Calculate the total from the cart
-  //3. If the user has enough balance buy every book
-  //4. Create a boughtBook and delete the cartItem for each book in the cart
+
+app.post("/cartItem", async (req, res) => {
+  // let { userId, bookId, quantity } = req.body;
+  try {
+    const cartItem = await prisma.cartItem.create({
+      data: {
+        userId: req.body.userId,
+        bookId: req.body.bookId,
+        quantity: req.body.quantity,
+      },
+      include: { book: true},
+    });
+    res.send(cartItem);
+  } catch (error) {
+    //@ts-ignore
+    res.status(400).send({ errors: [error.message] });
+  }
 });
+// app.post("/buy", async (req, res) => {
+//   // 1. Get the user from the token
+//   try {
+//     const token = req.headers.authorization;
+//     if (token) {
+//       const user = await getCurrentUser(token);
+//       if (!user) {
+//         res.status(400).send({ errors: ["Invalid token"] });
+//       } else {
+//         //2. Calculate the total from the cart
+//         // function calculateTotal(bookPrice:number, quantity: number) {
+//         //   let total = bookPrice * quantity
+//         //   return total
+//         // }
+//         for (let cartItem of user.cart) {
+//           const book = await prisma.book.findUnique({
+//             where: { id: cartItem.bookId },
+//           });
+//           console.log(book);
+       
+//             let total = cartItem.book.price * cartItem.quantity;
+//             if (user.balance > total) {
+//               console.log(total);
+//               const boughtBook = await prisma.boughtBook.create({
+//                 data: {
+//                   userId: user.id,
+//                   bookId: cartItem.bookId,
+//                 },
+//               });
+
+//               res.send(boughtBook);
+            
+//           }
+//         }
+//       }
+//     } else {
+//       res.status(400).send({ errors: ["You are tired"] });
+//     }
+//   } catch (error) {
+//     //@ts-ignore
+//     res.status(400).send({ errors: [error.message] });
+//   }
+
+//   //3. If the user has enough balance buy every book
+
+//   //4. Create a boughtBook and delete the cartItem for each book in the cart
+// });
+app.post('/buy', async (req, res) => {
+  // 1. Get the user from the token
+  try {
+    const token = req.headers.authorization
+    if (token) {
+      const user = await getCurrentUser(token)
+      if (!user) {
+        res.status(400).send({ errors: ['Invalid token'] })
+      } else {
+        //2. Calculate the total from the cart
+        let total = 0
+        for (let item of user.cart) {
+          total += item.book.price + item.quantity
+        }
+
+        //3. If the user has enough balance buy every book
+        if (total < user.balance) {
+          //4. Create a boughtBook and delete the cartItem for each book in the cart
+          for (let item of user.cart) {
+            await prisma.boughtBook.create({
+              data: {
+                userId: item.userId,
+                bookId: item.bookId
+              }
+            })
+
+            await prisma.cartItem.delete({ where: { id: item.id } })
+          }
+
+          res.send({ message: 'Order successful!' })
+        } else {
+          res.status(400).send({ errors: ['Uh oh... you broke!'] })
+        }
+      }
+    } else {
+      res.status(400).send({ errors: ['You are tired'] })
+    }
+  } catch (error) {
+    //@ts-ignore
+    res.status(400).send({ errors: [error.message] })
+  }
+})
 
 app.post("/sign-up", async (req, res) => {
   const { name, email, password } = req.body;
@@ -123,6 +224,7 @@ app.post("/sign-in", async (req, res) => {
 
     const user = await prisma.user.findUnique({
       where: { email },
+      include: { boughtBooks: true, cart: true },
     });
     if (user && verify(password, user.password)) {
       const token = generateToken(user.id);
