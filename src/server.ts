@@ -46,12 +46,26 @@ app.get("/authors", async (req, res) => {
     res.status(400).send({ errors: [error.message] });
   }
 });
+// app.get("/users", async (req, res) => {
+//   try {
+//     const users = await prisma.cart.findMany({
+//       include: { user: true, books: true },
+//     });
+//     res.send(users);
+//   } catch (error) {
+//     //@ts-ignore
+//     res.status(400).send({ errors: [error.message] });
+//   }
+// });
 
 // app.post("/bookInCart", async (req, res) => {
-//   const cart = await prisma.user.create({data:
-//   })
-// })
-
+//   const cart = await prisma.cart.create({
+//     data: {
+//       userId: req.body.userId,
+//     },
+//   });
+//   res.send(cart);
+// });
 
 app.post("/sign-up", async (req, res) => {
   const { name, email, password } = req.body;
