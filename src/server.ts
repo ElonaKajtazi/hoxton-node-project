@@ -12,7 +12,17 @@ const prisma = new PrismaClient();
 const port = 4444;
 
 app.get("/", (req, res) => {
-  res.send("Starting project");
+  res.send(`<h1>Book/Author API</h1>
+  <h2>Available resources:</h2>
+  <ul>
+    <li><a href="/books">Books</a></li>
+    <li><a href="/authors">Authors</a></li>
+    <li><a href="/books/id">Book by id </a></li>
+    <li><a href="/authors/id">Author by id </a></li>
+    <li><a href="/categories/">Categories</a></li>
+
+
+  </ul>`);
 });
 
 app.get("/books", async (req, res) => {
@@ -95,28 +105,72 @@ app.get("/authors", async (req, res) => {
 
 app.post("/cartItem", async (req, res) => {
   try {
-    let { userId, bookId, quantity } = req.body;
+    const token = req.headers.authorization;
+
+    if (!token) {
+      res.status(401).send({ errors: ["No token provided."] });
+      return;
+    }
+    const user = await getCurrentUser(token);
+    if (!user) {
+      res.status(401).send({ errors: ["Invalid token provided."] });
+      return;
+    }
+    const data = {
+      userId: req.body.userId,
+      bookId: req.body.bookId,
+      quantity: req.body.quantity,
+    };
+
     let errors: string[] = [];
-    if (typeof userId !== "number") {
+    const book = await prisma.book.findUnique({
+      where: { id: Number(data.bookId) },
+    });
+
+    if (!book) {
+      res.status(404).send({ errors: ["Book not found"] });
+      return;
+    }
+    if (!data.quantity) {
+      await prisma.book.update({
+        where: { id: Number(data.bookId) },
+        data: { inStock: Number(book.inStock) - 1 },
+      });
+    } else {
+      await prisma.book.update({
+        where: { id: Number(data.bookId) },
+        data: { inStock: book.inStock - Number(data.quantity) },
+      });
+    }
+    if (book.inStock < 0) {
+      await prisma.book.update({
+        where: { id: data.bookId },
+        data: { inStock: 0 },
+      });
+    }
+
+    if (typeof data.userId !== "number") {
       errors.push("UserId not provided or not a number");
     }
-    if (typeof bookId !== "number") {
+    if (typeof data.bookId !== "number") {
       errors.push("BookId not provided or not a number");
     }
-    if (quantity && typeof quantity !== "number") {
+    if (data.quantity && typeof data.quantity !== "number") {
       errors.push("Quantity provided is not a number");
+    }
+    if (Number(book.inStock) < Number(data.quantity)) {
+      errors.push("Not enough books in stock");
     }
     if (errors.length === 0) {
       const cartItem = await prisma.cartItem.create({
         data: {
-          userId,
-          bookId,
-          quantity,
+          userId: data.userId,
+          bookId: data.bookId,
+          quantity: data.quantity,
         },
         include: { book: true },
       });
-      // cartItem.book.inStock = Number(cartItem.book.inStock - Number(quantity));
-      // console.log(cartItem.book.inStock);
+
       res.send(cartItem);
     } else {
       res.status(400).send({ errors });
@@ -162,7 +216,7 @@ app.post("/buy", async (req, res) => {
         }
       }
     } else {
-      res.status(400).send({ errors: ["You are tired"] });
+      res.status(400).send({ errors: ["Token not found"] });
     }
   } catch (error) {
     //@ts-ignore

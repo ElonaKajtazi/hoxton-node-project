@@ -23,7 +23,7 @@ export async function getCurrentUser(token: string) {
 
     const user = await prisma.user.findUnique({
       where: { id: (data as any).id },
-      include: { cart: {include:{book:true}}, boughtBooks: true },
+      include: { cart: { include: { book: true } }, boughtBooks: true },
     });
     return user;
   } catch (error) {
