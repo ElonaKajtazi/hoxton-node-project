@@ -31,7 +31,8 @@ app.get("/books", async (req, res) => {
       include: {
         categories: true,
         cart: { include: { book: true } },
-        boughtBooks: true,
+        boughtBooks: { include: { book: true } },
+        author: true,
       },
     });
     res.send(books);
@@ -250,7 +251,8 @@ app.post("/sign-up", async (req, res) => {
       errors.push("Password missing or not a string");
     }
 
-    if (errors.length > 0) {///
+    if (errors.length > 0) {
+      ///
       res.status(400).send({ errors });
       return;
     }
@@ -266,6 +268,10 @@ app.post("/sign-up", async (req, res) => {
         name: data.name,
         email: data.email,
         password: hash(data.password),
+      },
+      include: {
+        boughtBooks: { include: { book: true } },
+        cart: { include: { book: true } },
       },
     });
     const token = generateToken(user.id);
@@ -296,7 +302,10 @@ app.post("/sign-in", async (req, res) => {
 
     const user = await prisma.user.findUnique({
       where: { email },
-      include: { boughtBooks: true, cart: true },
+      include: {
+        boughtBooks: { include: { book: true } },
+        cart: { include: { book: true } },
+      },
     });
     if (user && verify(password, user.password)) {
       const token = generateToken(user.id);
