@@ -230,35 +230,42 @@ app.post("/buy", async (req, res) => {
 });
 
 app.post("/sign-up", async (req, res) => {
-  const { name, email, password } = req.body;
+  // const { name, email, password } = req.body;
+  const data = {
+    name: req.body.name,
+    email: req.body.email,
+    password: req.body.email,
+  };
   try {
     const errors: string[] = [];
 
-    if (typeof name !== "string") {
+    if (typeof data.name !== "string") {
       errors.push("Name missing or not a string");
     }
-    if (typeof email !== "string") {
+    if (typeof data.email !== "string") {
       errors.push("Email missing or not a string");
     }
 
-    if (typeof password !== "string") {
+    if (typeof data.password !== "string") {
       errors.push("Password missing or not a string");
     }
 
-    if (errors.length > 0) {
+    if (errors.length > 0) {///
       res.status(400).send({ errors });
       return;
     }
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+    const existingUser = await prisma.user.findUnique({
+      where: { email: data.email },
+    });
     if (existingUser) {
       res.status(400).send({ errors: ["Email already exists."] });
       return;
     }
     const user = await prisma.user.create({
       data: {
-        name,
-        email,
-        password: hash(password),
+        name: data.name,
+        email: data.email,
+        password: hash(data.password),
       },
     });
     const token = generateToken(user.id);
