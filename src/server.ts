@@ -96,12 +96,12 @@ app.get("/authors", async (req, res) => {
     res.status(400).send({ errors: [error.message] });
   }
 });
-// app.get("/users", async (req, res) => {
-//   const users = await prisma.user.findMany({
-//     include: { cart: true, boughtBooks: true },
-//   });
-//   res.send(users);
-// });
+app.get("/users", async (req, res) => {
+  const users = await prisma.user.findMany({
+    include: { cart: true, boughtBooks: true },
+  });
+  res.send(users);
+});
 
 app.post("/cartItem", async (req, res) => {
   try {
@@ -209,7 +209,12 @@ app.post("/buy", async (req, res) => {
 
             await prisma.cartItem.delete({ where: { id: item.id } });
           }
-
+          await prisma.user.update({
+            where: { id: user.id },
+            data: {
+              balance: user.balance - total,
+            },
+          });
           res.send({ message: "Order successful!" });
         } else {
           res.status(400).send({ errors: ["Uh oh... you broke!"] });
