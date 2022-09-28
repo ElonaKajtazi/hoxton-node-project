@@ -250,7 +250,7 @@ app.post("/sign-up", async (req, res) => {
       errors.push("Password missing or not a string");
     }
 
-    if (errors.length > 0) {
+    if (errors.length > 0) {///
       res.status(400).send({ errors });
       return;
     }
