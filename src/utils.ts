@@ -6,7 +6,7 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 dotenv.config();
 
-export function hash(password: string) {
+export function hash(password: string) {//hello
   return bcrypt.hashSync(password, 6);
 }
 
