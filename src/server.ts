@@ -195,7 +195,7 @@ app.post("/buy", async (req, res) => {
         //2. Calculate the total from the cart
         let total = 0;
         for (let item of user.cart) {
-          total += item.book.price + item.quantity;
+          total += item.book.price * item.quantity;
         }
 
         //3. If the user has enough balance buy every book
