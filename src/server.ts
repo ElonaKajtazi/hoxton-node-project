@@ -95,7 +95,7 @@ app.get("/categories/:id", async (req, res) => {
 
     const category = await prisma.category.findUnique({
       where: { id },
-      include: { books: true},
+      include: { books: true },
     });
     if (category) {
       res.send(category);
@@ -123,6 +123,32 @@ app.get("/users", async (req, res) => {
   res.send(users);
 });
 
+app.delete("/cartItem/:id", async (req, res) => {
+  try {
+    const token = req.headers.authorization;
+    if (!token) {
+      res.status(404).send({ errors: ["Token not found"] });
+      return;
+    }
+    const user = await getCurrentUser(token);
+    if (!user) {
+      res.status(404).send({ errors: ["Invalid token provided"] });
+      return;
+    }
+    const id = Number(req.params.id);
+    if (!id) {
+      res
+        .status(400)
+        .send({ errors: ["CartItem with this id does not exist"] });
+      return;
+    }
+    const cartItem = await prisma.cartItem.delete({ where: { id } });
+    res.send(user.cart);
+  } catch (error) {
+    //@ts-ignore
+    res.status(400).send({ errors: [error.message] });
+  }
+});
 app.post("/cartItem", async (req, res) => {
   try {
     const token = req.headers.authorization;
@@ -140,7 +166,6 @@ app.post("/cartItem", async (req, res) => {
       userId: user.id,
       bookId: req.body.bookId,
       quantity: req.body.quantity,
-  
     };
 
     let errors: string[] = [];
@@ -189,13 +214,31 @@ app.post("/cartItem", async (req, res) => {
           bookId: data.bookId,
           quantity: data.quantity,
         },
-        include: { book: {include:{author:true}}}
+        include: { book: { include: { author: true } } },
       });
 
       res.send(cartItem);
     } else {
       res.status(400).send({ errors });
     }
+  } catch (error) {
+    //@ts-ignore
+    res.status(400).send({ errors: [error.message] });
+  }
+});
+app.get("/cartItems", async (req, res) => {
+  try {
+    const token = req.headers.authorization;
+    if (!token) {
+      res.status(404).send({ errors: ["Token not found"] });
+      return;
+    }
+    const user = await getCurrentUser(token);
+    if (!user) {
+      res.status(404).send({ errors: ["Invalid tokwn"] });
+      return;
+    }
+    res.send(user.cart);
   } catch (error) {
     //@ts-ignore
     res.status(400).send({ errors: [error.message] });
