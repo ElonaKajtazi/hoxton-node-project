@@ -59,6 +59,7 @@ app.get("/books/:id", async (req, res) => {
     res.status(400).send({ errors: [error.message] });
   }
 });
+
 app.get("/authors/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
@@ -83,6 +84,24 @@ app.get("/categories", async (req, res) => {
       include: { books: true },
     });
     res.send(categories);
+  } catch (error) {
+    //@ts-ignore
+    res.status(400).send({ errors: [error.message] });
+  }
+});
+app.get("/categories/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+
+    const category = await prisma.category.findUnique({
+      where: { id },
+      include: { books: true},
+    });
+    if (category) {
+      res.send(category);
+    } else {
+      res.status(400).send({ errors: ["Category not found"] });
+    }
   } catch (error) {
     //@ts-ignore
     res.status(400).send({ errors: [error.message] });
@@ -144,7 +163,7 @@ app.post("/cartItem", async (req, res) => {
         data: { inStock: book.inStock - Number(data.quantity) },
       });
     }
-    if (book.inStock < 0) {
+    if (book.inStock <= 0) {
       await prisma.book.update({
         where: { id: data.bookId },
         data: { inStock: 0 },
