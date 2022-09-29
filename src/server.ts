@@ -118,7 +118,7 @@ app.post("/cartItem", async (req, res) => {
       return;
     }
     const data = {
-      userId: req.body.userId,
+      userId: user.id,
       bookId: req.body.bookId,
       quantity: req.body.quantity,
     };
