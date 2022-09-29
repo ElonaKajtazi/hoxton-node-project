@@ -270,8 +270,8 @@ app.post("/sign-up", async (req, res) => {
         password: hash(data.password),
       },
       include: {
-        boughtBooks: { include: { book: true } },
-        cart: { include: { book: true } },
+        boughtBooks: { include: { book: { include: { author: true } } } },
+        cart: { include: { book: { include: { author: true } } } },
       },
     });
     const token = generateToken(user.id);
@@ -303,8 +303,8 @@ app.post("/sign-in", async (req, res) => {
     const user = await prisma.user.findUnique({
       where: { email },
       include: {
-        boughtBooks: { include: { book: true } },
-        cart: { include: { book: true } },
+        boughtBooks: { include: { book: { include: { author: true } } } },
+        cart: { include: { book: { include: { author: true } } } },
       },
     });
     if (user && verify(password, user.password)) {
