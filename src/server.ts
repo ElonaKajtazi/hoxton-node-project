@@ -121,6 +121,7 @@ app.post("/cartItem", async (req, res) => {
       userId: user.id,
       bookId: req.body.bookId,
       quantity: req.body.quantity,
+  
     };
 
     let errors: string[] = [];
@@ -169,7 +170,7 @@ app.post("/cartItem", async (req, res) => {
           bookId: data.bookId,
           quantity: data.quantity,
         },
-        include: { book: true },
+        include: { book: {include:{author:true}}}
       });
 
       res.send(cartItem);
