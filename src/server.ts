@@ -30,8 +30,8 @@ app.get("/books", async (req, res) => {
     const books = await prisma.book.findMany({
       include: {
         categories: true,
-        cart: { include: { book: true } },
-        boughtBooks: { include: { book: true } },
+        cart: { include: { book: { include: { author: true } } } },
+        boughtBooks: { include: { book: { include: { author: true } } } },
         author: true,
       },
     });
