@@ -6,7 +6,7 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 dotenv.config();
 
-export function hash(password: string) {///
+export function hash(password: string) {
   return bcrypt.hashSync(password, 6);
 }
 
@@ -15,7 +15,7 @@ export function verify(password: string, hash: string) {
 }
 
 export function generateToken(id: number) {
-  return jwt.sign({ id }, process.env.SECRET!);
+  return jwt.sign({ id }, process.env.SECRET!, { expiresIn: "1 day" });
 }
 export async function getCurrentUser(token: string) {
   try {
@@ -23,7 +23,10 @@ export async function getCurrentUser(token: string) {
 
     const user = await prisma.user.findUnique({
       where: { id: (data as any).id },
-      include: { cart: { include: { book: true } }, boughtBooks: true },
+      include: {
+        cart: { include: { book: { include: { author: true } } } },
+        boughtBooks: { include: { book: { include: { author: true } } } },
+      },
     });
     return user;
   } catch (error) {

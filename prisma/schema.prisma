@@ -36,20 +36,22 @@ model Book {
 }
 
 model CartItem {
-  id       Int  @id @default(autoincrement())
-  user     User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  book     Book @relation(fields: [bookId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id       Int      @id @default(autoincrement())
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  book     Book     @relation(fields: [bookId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   userId   Int
   bookId   Int
-  quantity Int  @default(1)
+  quantity Int      @default(1)
+  time     DateTime @default(now())
 }
 
 model BoughtBook {
-  id     Int  @id @default(autoincrement())
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  book   Book @relation(fields: [bookId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id     Int      @id @default(autoincrement())
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  book   Book     @relation(fields: [bookId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   userId Int
   bookId Int
+  time   DateTime @default(now())
 }
 
 model Author {

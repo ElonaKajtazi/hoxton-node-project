@@ -30,11 +30,34 @@ app.get("/books", async (req, res) => {
     const books = await prisma.book.findMany({
       include: {
         categories: true,
-        cart: { include: { book: true } },
-        boughtBooks: true,
+        cart: { include: { book: { include: { author: true } } } },
+        boughtBooks: { include: { book: { include: { author: true } } } },
+        author: true,
       },
     });
     res.send(books);
+  } catch (error) {
+    //@ts-ignore
+    res.status(400).send({ errors: [error.message] });
+  }
+});
+
+app.get("/booksPerCategory/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!id) {
+      res.status(400).send({ errors: ["Category id not provided"] });
+      return;
+    }
+    const category = await prisma.category.findUnique({
+      where: { id },
+      include: { books: true },
+    });
+    if (!category) {
+      res.status(404).send({ errors: ["Category not found"] });
+      return;
+    }
+    res.send(category.books);
   } catch (error) {
     //@ts-ignore
     res.status(400).send({ errors: [error.message] });
@@ -58,6 +81,7 @@ app.get("/books/:id", async (req, res) => {
     res.status(400).send({ errors: [error.message] });
   }
 });
+
 app.get("/authors/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
@@ -82,6 +106,24 @@ app.get("/categories", async (req, res) => {
       include: { books: true },
     });
     res.send(categories);
+  } catch (error) {
+    //@ts-ignore
+    res.status(400).send({ errors: [error.message] });
+  }
+});
+app.get("/categories/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+
+    const category = await prisma.category.findUnique({
+      where: { id },
+      include: { books: true },
+    });
+    if (category) {
+      res.send(category);
+    } else {
+      res.status(400).send({ errors: ["Category not found"] });
+    }
   } catch (error) {
     //@ts-ignore
     res.status(400).send({ errors: [error.message] });
@@ -117,7 +159,7 @@ app.post("/cartItem", async (req, res) => {
       return;
     }
     const data = {
-      userId: req.body.userId,
+      userId: user.id,
       bookId: req.body.bookId,
       quantity: req.body.quantity,
     };
@@ -142,7 +184,7 @@ app.post("/cartItem", async (req, res) => {
         data: { inStock: book.inStock - Number(data.quantity) },
       });
     }
-    if (book.inStock < 0) {
+    if (book.inStock <= 0) {
       await prisma.book.update({
         where: { id: data.bookId },
         data: { inStock: 0 },
@@ -168,13 +210,70 @@ app.post("/cartItem", async (req, res) => {
           bookId: data.bookId,
           quantity: data.quantity,
         },
-        include: { book: true },
+        include: { book: { include: { author: true } } },
       });
 
       res.send(cartItem);
     } else {
       res.status(400).send({ errors });
     }
+  } catch (error) {
+    //@ts-ignore
+    res.status(400).send({ errors: [error.message] });
+  }
+});
+app.get("/cartItems", async (req, res) => {
+  try {
+    const token = req.headers.authorization;
+    if (!token) {
+      res.status(404).send({ errors: ["Token not found"] });
+      return;
+    }
+    const user = await getCurrentUser(token);
+    if (!user) {
+      res.status(404).send({ errors: ["Invalid tokwn"] });
+      return;
+    }
+    res.send(user.cart);
+  } catch (error) {
+    //@ts-ignore
+    res.status(400).send({ errors: [error.message] });
+  }
+});
+app.delete("/cartItem/:id", async (req, res) => {
+  try {
+    const token = req.headers.authorization;
+    if (!token) {
+      res.status(404).send({ errors: ["Token not found"] });
+      return;
+    }
+    const user = await getCurrentUser(token);
+    if (!user) {
+      res.status(404).send({ errors: ["Invalid token provided"] });
+      return;
+    }
+    const id = Number(req.params.id);
+    if (!id) {
+      res
+        .status(400)
+        .send({ errors: ["CartItem with this id does not exist"] });
+      return;
+    }
+    const cartItem = await prisma.cartItem.delete({
+      where: { id },
+      include: { book: true },
+    });
+    if (!cartItem) {
+      res.status(404).send({ errors: ["Cart item not found"] });
+      return;
+    }
+    await prisma.book.update({
+      where: { id: cartItem.bookId },
+      data: {
+        inStock: cartItem.book.inStock + cartItem.quantity,
+      },
+    });
+    res.send(user.cart);
   } catch (error) {
     //@ts-ignore
     res.status(400).send({ errors: [error.message] });
@@ -193,7 +292,7 @@ app.post("/buy", async (req, res) => {
         //2. Calculate the total from the cart
         let total = 0;
         for (let item of user.cart) {
-          total += item.book.price + item.quantity;
+          total += item.book.price * item.quantity;
         }
 
         //3. If the user has enough balance buy every book
@@ -250,7 +349,8 @@ app.post("/sign-up", async (req, res) => {
       errors.push("Password missing or not a string");
     }
 
-    if (errors.length > 0) {///
+    if (errors.length > 0) {
+      ///
       res.status(400).send({ errors });
       return;
     }
@@ -266,6 +366,10 @@ app.post("/sign-up", async (req, res) => {
         name: data.name,
         email: data.email,
         password: hash(data.password),
+      },
+      include: {
+        boughtBooks: { include: { book: { include: { author: true } } } },
+        cart: { include: { book: { include: { author: true } } } },
       },
     });
     const token = generateToken(user.id);
@@ -296,7 +400,10 @@ app.post("/sign-in", async (req, res) => {
 
     const user = await prisma.user.findUnique({
       where: { email },
-      include: { boughtBooks: true, cart: true },
+      include: {
+        boughtBooks: { include: { book: { include: { author: true } } } },
+        cart: { include: { book: { include: { author: true } } } },
+      },
     });
     if (user && verify(password, user.password)) {
       const token = generateToken(user.id);
