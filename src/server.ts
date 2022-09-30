@@ -63,6 +63,27 @@ app.get("/booksPerCategory/:id", async (req, res) => {
     res.status(400).send({ errors: [error.message] });
   }
 });
+app.get("/booksPerAuthor/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!id) {
+      res.status(400).send({ errors: ["Author id not provided"] });
+      return;
+    }
+    const author = await prisma.author.findUnique({
+      where: { id },
+      include: { book: true },
+    });
+    if (!author) {
+      res.status(404).send({ errors: ["Author not found"] });
+      return;
+    }
+    res.send(author.book);
+  } catch (error) {
+    //@ts-ignore
+    res.status(400).send({ errors: [error.message] });
+  }
+});
 app.get("/books/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
@@ -173,36 +194,41 @@ app.post("/cartItem", async (req, res) => {
       res.status(404).send({ errors: ["Book not found"] });
       return;
     }
-    if (!data.quantity) {
-      await prisma.book.update({
-        where: { id: Number(data.bookId) },
-        data: { inStock: Number(book.inStock) - 1 },
-      });
+    if (Number(book.inStock) < Number(data.quantity)) {
+      errors.push("Not enough books in stock");
     } else {
       await prisma.book.update({
         where: { id: Number(data.bookId) },
         data: { inStock: book.inStock - Number(data.quantity) },
       });
     }
-    if (book.inStock <= 0) {
+    if (book.inStock < 0) {
       await prisma.book.update({
         where: { id: data.bookId },
         data: { inStock: 0 },
       });
     }
+    // if (!data.quantity) {
+    //   await prisma.book.update({
+    //     where: { id: Number(data.bookId) },
+    //     data: { inStock: Number(book.inStock) - 1 },
+    //   });
+    //   data.quantity = 1;
+    // } else {
+
+    // }
 
     if (typeof data.userId !== "number") {
       errors.push("UserId not provided or not a number");
     }
     if (typeof data.bookId !== "number") {
       errors.push("BookId not provided or not a number");
+      return;
     }
     if (data.quantity && typeof data.quantity !== "number") {
       errors.push("Quantity provided is not a number");
     }
-    if (Number(book.inStock) < Number(data.quantity)) {
-      errors.push("Not enough books in stock");
-    }
+
     if (errors.length === 0) {
       const cartItem = await prisma.cartItem.create({
         data: {
