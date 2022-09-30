@@ -16,7 +16,7 @@ export function verify(password: string, hash: string) {
 }
 
 export function generateToken(id: number) {
-  return jwt.sign({ id }, process.env.SECRET!);
+  return jwt.sign({ id }, process.env.SECRET!, { expiresIn: "1 day" });
 }
 export async function getCurrentUser(token: string) {
   try {

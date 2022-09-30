@@ -142,7 +142,20 @@ app.delete("/cartItem/:id", async (req, res) => {
         .send({ errors: ["CartItem with this id does not exist"] });
       return;
     }
-    const cartItem = await prisma.cartItem.delete({ where: { id } });
+    const cartItem = await prisma.cartItem.delete({
+      where: { id },
+      include: { book: true },
+    });
+    if (!cartItem) {
+      res.status(404).send({ errors: ["Cart item not found"] });
+      return;
+    }
+    await prisma.book.update({
+      where: { id: cartItem.bookId },
+      data: {
+        inStock: cartItem.book.inStock + cartItem.quantity,
+      },
+    });
     res.send(user.cart);
   } catch (error) {
     //@ts-ignore
