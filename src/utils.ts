@@ -7,7 +7,6 @@ const prisma = new PrismaClient();
 dotenv.config();
 
 export function hash(password: string) {
-  ///
   return bcrypt.hashSync(password, 6);
 }
 
