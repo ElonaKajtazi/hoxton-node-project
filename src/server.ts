@@ -192,8 +192,7 @@ app.post("/cartItem", async (req, res) => {
 
     if (!book) {
       res.status(404).send({ errors: ["Book not found"] });
-      return;
-    }
+      return
     if (Number(book.inStock) < Number(data.quantity)) {
       errors.push("Not enough books in stock");
     }
