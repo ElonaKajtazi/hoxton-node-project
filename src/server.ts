@@ -42,7 +42,7 @@ app.get("/books", async (req, res) => {
   }
 });
 
-app.get("/booksForCategory/:id", async (req, res) => {
+app.get("/booksPerCategory/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
     if (!id) {
