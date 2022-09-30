@@ -192,10 +192,21 @@ app.post("/cartItem", async (req, res) => {
 
     if (!book) {
       res.status(404).send({ errors: ["Book not found"] });
-      return
+      return;
     }
     if (Number(book.inStock) < Number(data.quantity)) {
       errors.push("Not enough books in stock");
+    } else {
+      await prisma.book.update({
+        where: { id: Number(data.bookId) },
+        data: { inStock: book.inStock - Number(data.quantity) },
+      });
+    }
+    if (book.inStock < 0) {
+      await prisma.book.update({
+        where: { id: data.bookId },
+        data: { inStock: 0 },
+      });
     }
     // if (!data.quantity) {
     //   await prisma.book.update({
@@ -204,18 +215,8 @@ app.post("/cartItem", async (req, res) => {
     //   });
     //   data.quantity = 1;
     // } else {
-      if (book.inStock <= 0) {
-        await prisma.book.update({
-          where: { id: data.bookId },
-          data: { inStock: 0 },
-        });
-      }
-      await prisma.book.update({
-        where: { id: Number(data.bookId) },
-        data: { inStock: book.inStock - Number(data.quantity) },
-      });
-    // }
 
+    // }
 
     if (typeof data.userId !== "number") {
       errors.push("UserId not provided or not a number");
@@ -227,7 +228,7 @@ app.post("/cartItem", async (req, res) => {
     if (data.quantity && typeof data.quantity !== "number") {
       errors.push("Quantity provided is not a number");
     }
- 
+
     if (errors.length === 0) {
       const cartItem = await prisma.cartItem.create({
         data: {
